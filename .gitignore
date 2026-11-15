@@ -1,0 +1,42 @@
+# Configuración local y secretos
+.env
+.env.*
+!.env.example
+!**/.env.example
+.aws/
+.codex/
+.agents/
+*.pem
+*.key
+*service-account*.json
+*credentials*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Node, frontend y empaquetado
+node_modules/
+dist/
+build/
+.serverless/
+.wrangler/
+coverage/
+playwright-report/
+test-results/
+
+# Herramientas y archivos temporales
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
