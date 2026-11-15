@@ -1,0 +1,35 @@
+Resources:
+  TelemetryDlq:
+    Type: AWS::SQS::Queue
+    Condition: CreateQueues
+    Properties:
+      QueueName: af-${sls:stage}-telemetry-dlq
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+  TelemetryQueue:
+    Type: AWS::SQS::Queue
+    Condition: CreateQueues
+    Properties:
+      QueueName: af-${sls:stage}-telemetry-queue
+      VisibilityTimeout: 180
+      MessageRetentionPeriod: 345600
+      SqsManagedSseEnabled: true
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt: [TelemetryDlq, Arn]
+        maxReceiveCount: 5
+  TelemetryEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      FunctionName:
+        Ref: ProcessTelemetryLambdaFunction
+      EventSourceArn:
+        Fn::If:
+          - CreateQueues
+          - Fn::GetAtt: [TelemetryQueue, Arn]
+          - Ref: ExistingTelemetryQueueArn
+      BatchSize: 10
+      MaximumBatchingWindowInSeconds: 0
+      FunctionResponseTypes: [ReportBatchItemFailures]
+      Enabled:
+        Fn::If: [TelemetryConsumerEnabled, true, false]

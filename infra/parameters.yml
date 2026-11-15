@@ -1,0 +1,54 @@
+Parameters:
+  UseExistingTables:
+    Type: String
+    Default: ${env:USE_EXISTING_TABLES, 'false'}
+    AllowedValues: ['true', 'false']
+  ExistingTelemetryQueueArn:
+    Type: String
+    Default: ${env:EXISTING_TELEMETRY_QUEUE_ARN, ''}
+  ExistingTelemetryQueueUrl:
+    Type: String
+    Default: ${env:EXISTING_TELEMETRY_QUEUE_URL, ''}
+  ExistingTelemetryDlqArn:
+    Type: String
+    Default: ${env:EXISTING_TELEMETRY_DLQ_ARN, ''}
+  ExistingTelemetryDlqUrl:
+    Type: String
+    Default: ${env:EXISTING_TELEMETRY_DLQ_URL, ''}
+  ExistingTelemetryBucket:
+    Type: String
+    Default: ${env:EXISTING_TELEMETRY_BUCKET, ''}
+  StepFunctionsRoleArn:
+    Type: String
+    Default: ${env:SFN_ROLE_ARN}
+  EventsStartSfnRoleArn:
+    Type: String
+    Default: ${env:EVENTS_START_SFN_ROLE_ARN}
+  SchedulerRoleArn:
+    Type: String
+    Default: ${env:SCHEDULER_ROLE_ARN, ''}
+  EnableScheduler:
+    Type: String
+    Default: ${env:ENABLE_SCHEDULER, 'false'}
+    AllowedValues: ['true', 'false']
+  EnableTelemetryConsumer:
+    Type: String
+    Default: ${env:ENABLE_TELEMETRY_CONSUMER, 'false'}
+    AllowedValues: ['true', 'false']
+  EnableAlarms:
+    Type: String
+    Default: ${env:ENABLE_ALARMS, 'true'}
+    AllowedValues: ['true', 'false']
+Conditions:
+  CreateTables:
+    Fn::Equals: [{Ref: UseExistingTables}, 'false']
+  CreateQueues:
+    Fn::Equals: [{Ref: ExistingTelemetryQueueArn}, '']
+  CreateTelemetryBucket:
+    Fn::Equals: [{Ref: ExistingTelemetryBucket}, '']
+  SchedulerAvailable:
+    Fn::Equals: [{Ref: EnableScheduler}, 'true']
+  TelemetryConsumerEnabled:
+    Fn::Equals: [{Ref: EnableTelemetryConsumer}, 'true']
+  AlarmsAvailable:
+    Fn::Equals: [{Ref: EnableAlarms}, 'true']

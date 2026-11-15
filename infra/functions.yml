@@ -1,0 +1,236 @@
+firebaseAuthorizer:
+  name: af-${sls:stage}-firebase-authorizer
+  handler: src.auth.firebase_authorizer.handler
+  timeout: 10
+  environment:
+    USERS_TABLE: "${self:custom.tableNames.users}"
+    FIREBASE_PROJECT_ID: "${env:FIREBASE_PROJECT_ID}"
+catalogAdmin:
+  name: af-${sls:stage}-catalog-admin
+  handler: src.admin.catalog_admin.handler
+  environment:
+    USERS_TABLE: "${self:custom.tableNames.users}"
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+    MACHINE_MODELS_TABLE: "${self:custom.tableNames.machineModels}"
+    MACHINES_TABLE: "${self:custom.tableNames.machines}"
+    TECHNICIANS_TABLE: "${self:custom.tableNames.technicians}"
+    PARTS_TABLE: "${self:custom.tableNames.parts}"
+    DEMO_SEED_ENABLED: "${env:DEMO_SEED_ENABLED, 'false'}"
+    DEMO_USER_UIDS_JSON: "${env:DEMO_USER_UIDS_JSON, '{}'}"
+    MAINTENANCE_WORKFLOW_ARN: {"Ref":"MaintenancePlanningWorkflow"}
+  events:
+    - httpApi:
+        method: POST
+        path: /api/admin/seed
+        authorizer:
+          name: firebaseAuthorizer
+    - httpApi:
+        method: POST
+        path: /api/admin/analytics/run
+        authorizer:
+          name: firebaseAuthorizer
+simulateTelemetry:
+  name: af-${sls:stage}-simulate-telemetry
+  handler: src.telemetry.simulate_telemetry.handler
+  role: "${env:SIMULATOR_ROLE_ARN, self:provider.iam.role}"
+  environment:
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+    MACHINES_TABLE: "${self:custom.tableNames.machines}"
+    MACHINE_MODELS_TABLE: "${self:custom.tableNames.machineModels}"
+    SECRET_STORE: "${env:SECRET_STORE, 'ssm'}"
+    SIMULATOR_SECRET_ID: "${env:SIMULATOR_SECRET_ID, '/af/${sls:stage}/simulator-token'}"
+    DEMO_OPERATION_ID: "${env:DEMO_OPERATION_ID, 'op-demo'}"
+    TELEMETRY_POST_URL: {"Fn::Join":["",["https://",{"Ref":"HttpApi"},".execute-api.",{"Ref":"AWS::Region"},".",{"Ref":"AWS::URLSuffix"},"/telemetry/batch"]]}
+ingestApi:
+  name: af-${sls:stage}-ingest-api
+  handler: src.telemetry.ingest_api.handler
+  role: "${env:INGEST_ROLE_ARN, self:provider.iam.role}"
+  environment:
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+    MACHINES_TABLE: "${self:custom.tableNames.machines}"
+    MACHINE_MODELS_TABLE: "${self:custom.tableNames.machineModels}"
+    SECRET_STORE: "${env:SECRET_STORE, 'ssm'}"
+    SIMULATOR_SECRET_ID: "${env:SIMULATOR_SECRET_ID, '/af/${sls:stage}/simulator-token'}"
+    TELEMETRY_QUEUE_URL: {"Fn::If":["CreateQueues",{"Ref":"TelemetryQueue"},{"Ref":"ExistingTelemetryQueueUrl"}]}
+  events:
+    - httpApi:
+        method: POST
+        path: /telemetry/batch
+processTelemetry:
+  timeout: 30
+  name: af-${sls:stage}-process-telemetry
+  handler: src.telemetry.process_telemetry.handler
+  environment:
+    MACHINES_TABLE: "${self:custom.tableNames.machines}"
+    MACHINE_MODELS_TABLE: "${self:custom.tableNames.machineModels}"
+    EVENT_DEDUP_TABLE: "${self:custom.tableNames.eventDedup}"
+    TELEMETRY_BUCKET: {"Fn::If":["CreateTelemetryBucket",{"Ref":"TelemetryBucket"},{"Ref":"ExistingTelemetryBucket"}]}
+    EVENT_BUS_NAME: {"Ref":"DomainEventBus"}
+fleetApi:
+  name: af-${sls:stage}-fleet-api
+  handler: src.fleet.fleet_api.handler
+  environment:
+    USERS_TABLE: "${self:custom.tableNames.users}"
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+    MACHINES_TABLE: "${self:custom.tableNames.machines}"
+    MACHINE_MODELS_TABLE: "${self:custom.tableNames.machineModels}"
+    TELEMETRY_BUCKET: {"Fn::If":["CreateTelemetryBucket",{"Ref":"TelemetryBucket"},{"Ref":"ExistingTelemetryBucket"}]}
+  events:
+    - httpApi:
+        method: GET
+        path: /api/fleet
+        authorizer:
+          name: firebaseAuthorizer
+    - httpApi:
+        method: GET
+        path: /api/machines/{id}
+        authorizer:
+          name: firebaseAuthorizer
+    - httpApi:
+        method: GET
+        path: /api/machines/{id}/history
+        authorizer:
+          name: firebaseAuthorizer
+incidentApi:
+  name: af-${sls:stage}-incident-api
+  handler: src.incidents.incident_api.handler
+  environment:
+    USERS_TABLE: "${self:custom.tableNames.users}"
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+    INCIDENTS_TABLE: "${self:custom.tableNames.incidents}"
+    ACTIVE_INCIDENTS_TABLE: "${self:custom.tableNames.activeIncidents}"
+    MAINTENANCE_EVENTS_TABLE: "${self:custom.tableNames.maintenanceEvents}"
+    TECHNICIANS_TABLE: "${self:custom.tableNames.technicians}"
+    PARTS_TABLE: "${self:custom.tableNames.parts}"
+    PART_RESERVATIONS_TABLE: "${self:custom.tableNames.partReservations}"
+    EVENT_DEDUP_TABLE: "${self:custom.tableNames.eventDedup}"
+  events:
+    - httpApi:
+        method: GET
+        path: /api/incidents
+        authorizer:
+          name: firebaseAuthorizer
+    - httpApi:
+        method: GET
+        path: /api/incidents/{id}
+        authorizer:
+          name: firebaseAuthorizer
+    - httpApi:
+        method: POST
+        path: /api/incidents/{id}/start
+        authorizer:
+          name: firebaseAuthorizer
+    - httpApi:
+        method: POST
+        path: /api/incidents/{id}/resolve
+        authorizer:
+          name: firebaseAuthorizer
+    - httpApi:
+        method: POST
+        path: /api/incidents/{id}/close
+        authorizer:
+          name: firebaseAuthorizer
+    - httpApi:
+        method: POST
+        path: /api/incidents/{id}/reassign
+        authorizer:
+          name: firebaseAuthorizer
+incidentService:
+  name: af-${sls:stage}-incident-service
+  handler: src.incidents.incident_service.handler
+  environment:
+    INCIDENTS_TABLE: "${self:custom.tableNames.incidents}"
+    ACTIVE_INCIDENTS_TABLE: "${self:custom.tableNames.activeIncidents}"
+    MAINTENANCE_EVENTS_TABLE: "${self:custom.tableNames.maintenanceEvents}"
+    EVENT_DEDUP_TABLE: "${self:custom.tableNames.eventDedup}"
+    MACHINE_MODELS_TABLE: "${self:custom.tableNames.machineModels}"
+    MACHINES_TABLE: "${self:custom.tableNames.machines}"
+    TECHNICIANS_TABLE: "${self:custom.tableNames.technicians}"
+    PARTS_TABLE: "${self:custom.tableNames.parts}"
+    PART_RESERVATIONS_TABLE: "${self:custom.tableNames.partReservations}"
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+technicianDispatch:
+  name: af-${sls:stage}-technician-dispatch
+  handler: src.technicians.technician_dispatch.handler
+  environment:
+    USERS_TABLE: "${self:custom.tableNames.users}"
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+    TECHNICIANS_TABLE: "${self:custom.tableNames.technicians}"
+  events:
+    - httpApi:
+        method: GET
+        path: /api/technicians
+        authorizer:
+          name: firebaseAuthorizer
+partsService:
+  name: af-${sls:stage}-parts-service
+  handler: src.parts.parts_service.handler
+  environment:
+    USERS_TABLE: "${self:custom.tableNames.users}"
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+    PARTS_TABLE: "${self:custom.tableNames.parts}"
+    PART_RESERVATIONS_TABLE: "${self:custom.tableNames.partReservations}"
+    MACHINE_MODELS_TABLE: "${self:custom.tableNames.machineModels}"
+    ANALYTICS_TABLE: "${self:custom.tableNames.analytics}"
+  events:
+    - httpApi:
+        method: GET
+        path: /api/parts
+        authorizer:
+          name: firebaseAuthorizer
+notificationService:
+  name: af-${sls:stage}-notification-service
+  handler: src.notifications.notification_service.handler
+  environment:
+    USERS_TABLE: "${self:custom.tableNames.users}"
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+    NOTIFICATIONS_TABLE: "${self:custom.tableNames.notifications}"
+  events:
+    - httpApi:
+        method: GET
+        path: /api/notifications
+        authorizer:
+          name: firebaseAuthorizer
+    - httpApi:
+        method: PATCH
+        path: /api/notifications/{id}
+        authorizer:
+          name: firebaseAuthorizer
+maintenanceAnalyzer:
+  name: af-${sls:stage}-maintenance-analyzer
+  handler: src.maintenance.maintenance_analyzer.handler
+  environment:
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+    MACHINES_TABLE: "${self:custom.tableNames.machines}"
+    MACHINE_MODELS_TABLE: "${self:custom.tableNames.machineModels}"
+    MAINTENANCE_EVENTS_TABLE: "${self:custom.tableNames.maintenanceEvents}"
+    ANALYTICS_TABLE: "${self:custom.tableNames.analytics}"
+analyticsSync:
+  name: af-${sls:stage}-analytics-sync
+  handler: src.analytics.analytics_sync.handler
+  environment:
+    ANALYTICS_TABLE: "${self:custom.tableNames.analytics}"
+    TELEMETRY_BUCKET: {"Fn::If":["CreateTelemetryBucket",{"Ref":"TelemetryBucket"},{"Ref":"ExistingTelemetryBucket"}]}
+    SECRET_STORE: "${env:SECRET_STORE, 'ssm'}"
+    GCP_PROJECT_ID: "${env:GCP_PROJECT_ID, ''}"
+    BQ_DATASET: "${env:BQ_DATASET, 'arquifusion_dev'}"
+    BQ_LOCATION: "${env:BQ_LOCATION, 'US'}"
+    GCP_CREDENTIALS_SECRET_ID: "${env:GCP_CREDENTIALS_SECRET_ID, ''}"
+dashboardApi:
+  name: af-${sls:stage}-dashboard-api
+  handler: src.analytics.dashboard_api.handler
+  environment:
+    USERS_TABLE: "${self:custom.tableNames.users}"
+    OPERATIONS_TABLE: "${self:custom.tableNames.operations}"
+    ANALYTICS_TABLE: "${self:custom.tableNames.analytics}"
+  events:
+    - httpApi:
+        method: GET
+        path: /api/me
+        authorizer:
+          name: firebaseAuthorizer
+    - httpApi:
+        method: GET
+        path: /api/analytics
+        authorizer:
+          name: firebaseAuthorizer

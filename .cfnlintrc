@@ -1,0 +1,6 @@
+# Serverless emits explicit DependsOn entries already implied by Ref/GetAtt.
+# Keep other warnings/errors enabled, including unresolved or invalid roles.
+ignore_checks:
+  - W3005
+regions:
+  - us-east-1

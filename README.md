@@ -4,14 +4,14 @@ Plataforma de monitoreo de maquinaria y gestión de mantenimiento para una hacka
 
 ## Estado actual
 
-Repositorio inicial: estructura de directorios, configuración de Git y guía de colaboración. Los servicios, contratos, dependencias y recursos cloud están pendientes de implementación. No hay despliegues ni pruebas automatizadas ejecutables todavía.
+La rama de infraestructura incluye los archivos de AWS-01 a AWS-10: stack Serverless/CloudFormation, recursos, dos workflows, empaquetado Linux, validaciones y comandos de operación desde CloudShell. Se conserva el código de autenticación y seed de la rama del compañero. Los handlers de los demás dominios y el despliegue real siguen pendientes; las validaciones bloquean la publicación de un backend incompleto.
 
-La fuente de requisitos es el archivo local `ArquiFusion_requerimientos_y_backlog.md`, excluido de Git. Cada integrante debe obtenerlo por separado. El plano está en [ArquiFusion_arquitectura_v3 (1).drawio](<ArquiFusion_arquitectura_v3 (1).drawio>). El backlog original conserva sus tareas pendientes; este esqueleto no completa BASE-01.
+La fuente de requisitos es el archivo local `ArquiFusion_requerimientos_y_backlog.md`, excluido de Git. Cada integrante debe obtenerlo por separado. El plano está en [ArquiFusion_arquitectura_v3 (1).drawio](<ArquiFusion_arquitectura_v3 (1).drawio>). Tener archivos preparados y pruebas locales no cierra las tareas que requieren evidencia de AWS.
 
 ## Arquitectura acordada
 
 - Backend: AWS Lambda con Python 3.12, HTTP API Gateway, SQS, S3, DynamoDB, EventBridge y Step Functions.
-- Infraestructura: un futuro `serverless.yml` raíz, fragmentos CloudFormation en `infra/` y dos workflows en `workflows/`, con un stack por stage.
+- Infraestructura: `serverless.yml` raíz, fragmentos CloudFormation en `infra/` y dos workflows en `workflows/`, con un stack por stage y roles existentes del Learner Lab.
 - Frontend: React, TypeScript y Vite, publicado en Cloudflare Pages.
 - Identidad: Firebase Authentication para personas y credencial de productor separada para telemetría.
 - Analítica: cargas y consultas reales en BigQuery Sandbox, con snapshots en DynamoDB.
@@ -26,8 +26,10 @@ Los servicios comparten repositorio y despliegue inicial. Sus responsabilidades,
 ├── ArquiFusion_arquitectura_v3 (1).drawio
 ├── CONTRIBUTING.md
 ├── .env.example
-├── infra/                 # Recursos CloudFormation por implementar
-├── workflows/             # Definiciones ASL por implementar
+├── serverless.yml         # Stack único por stage, API y roles existentes
+├── infra/                 # Tablas, colas, storage, eventos, funciones y alarmas
+├── workflows/             # IncidentWorkflow y MaintenancePlanningWorkflow
+├── docs/                  # Guía de Learner Lab e inventario de recursos
 ├── contracts/             # OpenAPI, JSON Schema y contratos compartidos
 ├── src/
 │   ├── common/
@@ -53,13 +55,23 @@ Los servicios comparten repositorio y despliegue inicial. Sus responsabilidades,
     └── src/
 ```
 
-Los archivos `.gitkeep` conservan los directorios vacíos en Git. Los `__init__.py` preparan los paquetes Python; no contienen lógica de negocio.
+Los archivos `.gitkeep` conservan los directorios todavía vacíos. Los servicios de dominio se integran según los handlers declarados en `infra/functions.yml`. Los contratos de acciones internas están en [workflow-actions.md](contracts/workflow-actions.md).
 
 ## Empezar a colaborar
 
-Requisitos iniciales: Git y Python 3.12. Node y la versión de Serverless Framework se fijarán al implementar BASE-01 y WEB-01; todavía no hay archivos de dependencias ni comandos de build disponibles.
+Requisitos: Git, Python 3.12 y Node 20–24. Serverless está fijado en 3.40.0 con lockfile y empaquetado Python independiente. La [guía AWS para Learner Lab](docs/aws-learner-lab.md) explica las comprobaciones y configuración desde CloudShell, sin credenciales en equipos locales.
 
-1. Clonar el repositorio compartido cuando exista el remoto.
+```bash
+python -m pip install -r requirements-dev.txt
+npm ci
+npm run validate:template
+npm run lint:template
+python -m pytest
+```
+
+`validate:template` genera un template de prueba con referencias ficticias y un ZIP marcado como no desplegable. `npm run validate` comprueba configuración real y lista handlers pendientes. Cuando estén integrados, `npm run package` genera el ZIP Linux completo y `npm run deploy -- --stage dev --region us-east-1` verifica la cuenta y publica el stack. Revisar antes el template generado. No se despliega nada durante las pruebas locales.
+
+1. Clonar el repositorio compartido del equipo.
 2. Crear una rama desde `main` actualizada, por ejemplo `feat/catalog-seed`.
 3. Implementar una tarea acotada del backlog y agregar la validación correspondiente.
 4. Abrir un pull request con alcance, resultado y evidencia. Seguir [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -71,7 +83,7 @@ Copy-Item .env.example .env
 Copy-Item frontend/.env.example frontend/.env
 ```
 
-Completar únicamente los valores necesarios. Las plantillas todavía no están conectadas a código. Las credenciales AWS se gestionan mediante el perfil autorizado; los secretos del productor y GCP se almacenarán en el servicio AWS aprobado. Los archivos `.env` se excluyen de Git.
+Completar `.env` con cuenta esperada, región, bucket de artefactos, roles autorizados, proyecto Firebase y origen exacto de Pages. CloudShell aporta las credenciales de la sesión. Los valores de secretos del productor y GCP se cargan en el almacén AWS aprobado; el stack pasa sólo sus identificadores y `src/common/secrets.py` permite leerlos en runtime. `.env`, `.artifacts/`, `.local/` y los mapas locales de UID están excluidos de Git.
 
 ## Reparto inicial
 
@@ -79,8 +91,8 @@ Completar únicamente los valores necesarios. Las plantillas todavía no están 
 |---|---|---|
 | Compañero: RF-01 | Firebase, authorizer y validación de permisos en `src/auth/` | `feat/auth` |
 | Compañero: RF-03 | Simulador, escenarios e ingesta HTTP en `src/telemetry/` | `feat/telemetry-ingest` |
-| Nuestro frente: RF-02 | Seed, catálogos y perfiles en `src/admin/` y `seed/` | `feat/catalog-seed` |
-| Nuestro siguiente frente: RF-04 | Consumo SQS, histórico S3 y estado DynamoDB en `src/telemetry/` | `feat/telemetry-processing` |
+| Compañero: RF-02 | Seed, catálogos y perfiles en `src/admin/` y `seed/` | `feat/catalog-seed` |
+| Nuestro frente: AWS-01 a AWS-10 | Infraestructura, configuración, empaquetado, smoke tests y operación | `feat/aws-infrastructure` |
 
 Antes de integrar, acordar el esquema del mensaje SQS, IDs de catálogos, claves de tablas y formato de perfiles por operación. La creación del perfil Admin inicial debe coordinarse entre RF-01 y RF-02. Los UID reales de demo se incorporan desde un mapeo del entorno.
 
@@ -90,27 +102,12 @@ Antes de integrar, acordar el esquema del mensaje SQS, IDs de catálogos, claves
 2. Riesgo persistente → incidente → reservas → intervención → cierre.
 3. Plan local → carga y SQL BigQuery → KPI visible en la SPA.
 
-## Publicar el repositorio en GitHub
+## Repositorio compartido
 
-Si todavía no existe el primer commit, revisar los archivos y crearlo desde esta carpeta:
-
-```powershell
-git status --short
-git add .
-git diff --cached --stat
-git diff --cached --check
-git commit -m "chore: initialize ArquiFusion monorepo"
-```
-
-Una persona con sesión válida de GitHub CLI puede crear el repositorio privado y subir `main`:
-
-```powershell
-gh auth login --hostname github.com
-gh repo create arquifusion --private --source=. --remote=origin --push
-```
-
-Si el equipo ya creó un repositorio, configurar su URL como `origin` e integrar el historial existente antes de subir cambios; no crear un segundo repositorio ni forzar el push. Agregar al compañero como colaborador desde GitHub cuando el remoto exista.
+Usar [Colchado-Cloud-Server/Arquifusion](https://github.com/Colchado-Cloud-Server/Arquifusion), ramas por tarea y pull requests. Esta rama AWS se creó sobre `origin/feat/catalog-seed` para reutilizar el trabajo existente; coordinar su integración con `main`.
 
 ## Infraestructura y evidencias
 
-Todavía no se han automatizado ni validado recursos AWS, Firebase, GCP o Cloudflare desde este repositorio. Registrar aquí los recursos preaprovisionados, roles autorizados, región, comandos, URLs y evidencias cuando se realicen las tareas AWS, AUTH, BQ y CF. No guardar tokens ni secretos en documentación o logs.
+El template configura trece tablas on-demand, dos colas, histórico privado, catorce Lambdas, una HTTP API, EventBridge, dos workflows y alarmas. Scheduler es opcional; los schedules y el consumidor SQS comienzan deshabilitados. Referencia roles existentes y permite reutilizar recursos preaprovisionados sin duplicarlos.
+
+Usar [aws-resources.example.yml](docs/aws-resources.example.yml) para registrar nombres/ARNs, región, responsable, origen, denegaciones y evidencias reales. Las comprobaciones locales de CloudFormation, CORS, colas, workflows y scripts no sustituyen la validación en Learner Lab. El presupuesto y los permisos de la cuenta se comprueban antes de desplegar; los schedules se pausan al terminar la demo.

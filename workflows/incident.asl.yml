@@ -1,0 +1,382 @@
+{
+  "Comment": "RF-05/06 incident orchestration. Task action contracts: contracts/workflow-actions.md.",
+  "StartAt": "NormalizeRisk",
+  "TimeoutSeconds": 600,
+  "States": {
+    "NormalizeRisk": {
+      "Type": "Pass",
+      "Parameters": {
+        "schema_version": "1.0",
+        "risk.$": "$.detail",
+        "execution_arn.$": "$$.Execution.Id"
+      },
+      "Next": "ValidateRiskEvent"
+    },
+    "ValidateRiskEvent": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "IncidentServiceLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "validate_risk_event",
+        "context.$": "$"
+      },
+      "ResultPath": "$.validation",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "GetOrCreateIncident",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "InvalidRisk"
+        }
+      ]
+    },
+    "GetOrCreateIncident": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "IncidentServiceLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "get_or_create_incident",
+        "context.$": "$"
+      },
+      "ResultPath": "$.incident",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "IsNewIncident",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "IncidentCreationFailed"
+        }
+      ]
+    },
+    "IsNewIncident": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.incident.created",
+          "BooleanEquals": false,
+          "Next": "CreateNotifications"
+        }
+      ],
+      "Default": "RankTechnicians"
+    },
+    "RankTechnicians": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "TechnicianDispatchLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "rank_technicians",
+        "context.$": "$"
+      },
+      "ResultPath": "$.technicians",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CheckParts",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "TechnicalReview"
+        }
+      ]
+    },
+    "CheckParts": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "PartsServiceLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "check_parts",
+        "context.$": "$"
+      },
+      "ResultPath": "$.parts",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CheckAvailability",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "TechnicalReview"
+        }
+      ]
+    },
+    "CheckAvailability": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.technicians.available",
+          "BooleanEquals": false,
+          "Next": "NoTechnician"
+        },
+        {
+          "Variable": "$.parts.available",
+          "BooleanEquals": true,
+          "Next": "TryReserveResources"
+        },
+        {
+          "Variable": "$.parts.inspection_required",
+          "BooleanEquals": true,
+          "Next": "TryReserveResources"
+        }
+      ],
+      "Default": "NoParts"
+    },
+    "TryReserveResources": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "IncidentServiceLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "try_reserve_resources",
+        "context.$": "$"
+      },
+      "ResultPath": "$.reservation",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        },
+        {
+          "ErrorEquals": [
+            "ResourceConflict"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "ReservationOutcome",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "TechnicalReview"
+        }
+      ]
+    },
+    "ReservationOutcome": {
+      "Type": "Pass",
+      "Parameters": {
+        "status.$": "$.reservation.status",
+        "reason.$": "$.reservation.reason"
+      },
+      "ResultPath": "$.outcome",
+      "Next": "SetOutcome"
+    },
+    "NoTechnician": {
+      "Type": "Pass",
+      "Result": {
+        "status": "PENDING_TECH",
+        "reason": "NO_ELIGIBLE_TECHNICIAN"
+      },
+      "ResultPath": "$.outcome",
+      "Next": "SetOutcome"
+    },
+    "NoParts": {
+      "Type": "Pass",
+      "Result": {
+        "status": "PENDING_PARTS",
+        "reason": "INSUFFICIENT_STOCK"
+      },
+      "ResultPath": "$.outcome",
+      "Next": "SetOutcome"
+    },
+    "TechnicalReview": {
+      "Type": "Pass",
+      "Result": {
+        "status": "TRIAGED",
+        "reason": "WORKFLOW_REQUIRES_REVIEW"
+      },
+      "ResultPath": "$.outcome",
+      "Next": "SetOutcome"
+    },
+    "SetOutcome": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "IncidentServiceLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "set_outcome",
+        "context.$": "$"
+      },
+      "ResultPath": "$.decision",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CreateNotifications",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "IncidentUpdateFailed"
+        }
+      ]
+    },
+    "CreateNotifications": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "NotificationServiceLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "create_incident_notifications",
+        "context.$": "$"
+      },
+      "ResultPath": "$.notifications",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "Completed",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "NotificationDeliveryPending"
+        }
+      ]
+    },
+    "NotificationDeliveryPending": {
+      "Type": "Pass",
+      "Result": {
+        "status": "PENDING_RETRY"
+      },
+      "ResultPath": "$.notifications",
+      "Next": "Completed"
+    },
+    "InvalidRisk": {
+      "Type": "Fail",
+      "Error": "InvalidRiskEvent",
+      "Cause": "Risk validation failed; no incident assignment was attempted"
+    },
+    "IncidentCreationFailed": {
+      "Type": "Fail",
+      "Error": "IncidentCreationFailed"
+    },
+    "IncidentUpdateFailed": {
+      "Type": "Fail",
+      "Error": "IncidentUpdateFailed"
+    },
+    "Completed": {
+      "Type": "Succeed"
+    }
+  }
+}

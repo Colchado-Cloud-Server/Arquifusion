@@ -1,0 +1,263 @@
+Resources:
+  OperationsTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateOperationsTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.operations}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: operation_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: operation_id
+          KeyType: HASH
+  MachineModelsTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateMachineModelsTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.machineModels}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: model_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: model_id
+          KeyType: HASH
+  MachinesTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateMachinesTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.machines}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: machine_id
+          AttributeType: S
+        - AttributeName: operation_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: machine_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: by-operation
+          KeySchema:
+            - AttributeName: operation_id
+              KeyType: HASH
+            - AttributeName: machine_id
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+  EventDedupTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateEventDedupTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.eventDedup}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: event_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: event_id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+  IncidentsTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateIncidentsTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.incidents}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: incident_id
+          AttributeType: S
+        - AttributeName: machine_id
+          AttributeType: S
+        - AttributeName: opened_key
+          AttributeType: S
+        - AttributeName: operation_id
+          AttributeType: S
+        - AttributeName: operation_status
+          AttributeType: S
+      KeySchema:
+        - AttributeName: incident_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: by-machine
+          KeySchema:
+            - AttributeName: machine_id
+              KeyType: HASH
+            - AttributeName: opened_key
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: by-operation
+          KeySchema:
+            - AttributeName: operation_id
+              KeyType: HASH
+            - AttributeName: opened_key
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: by-operation-status
+          KeySchema:
+            - AttributeName: operation_status
+              KeyType: HASH
+            - AttributeName: opened_key
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+  ActiveIncidentsTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateActiveIncidentsTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.activeIncidents}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: active_key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: active_key
+          KeyType: HASH
+  MaintenanceEventsTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateMaintenanceEventsTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.maintenanceEvents}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: machine_id
+          AttributeType: S
+        - AttributeName: event_key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: machine_id
+          KeyType: HASH
+        - AttributeName: event_key
+          KeyType: RANGE
+  TechniciansTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateTechniciansTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.technicians}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: technician_id
+          AttributeType: S
+        - AttributeName: operation_availability
+          AttributeType: S
+        - AttributeName: zone_technician
+          AttributeType: S
+      KeySchema:
+        - AttributeName: technician_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: by-operation-availability
+          KeySchema:
+            - AttributeName: operation_availability
+              KeyType: HASH
+            - AttributeName: zone_technician
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+  PartsTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreatePartsTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.parts}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: warehouse_id
+          AttributeType: S
+        - AttributeName: part_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: warehouse_id
+          KeyType: HASH
+        - AttributeName: part_id
+          KeyType: RANGE
+  PartReservationsTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreatePartReservationsTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.partReservations}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: incident_id
+          AttributeType: S
+        - AttributeName: stock_key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: incident_id
+          KeyType: HASH
+        - AttributeName: stock_key
+          KeyType: RANGE
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateUsersTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.users}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: firebase_uid
+          AttributeType: S
+      KeySchema:
+        - AttributeName: firebase_uid
+          KeyType: HASH
+  NotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateNotificationsTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.notifications}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: notification_key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+        - AttributeName: notification_key
+          KeyType: RANGE
+  AnalyticsTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateAnalyticsTable
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:custom.tableNames.analytics}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: operation_id
+          AttributeType: S
+        - AttributeName: snapshot_key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: operation_id
+          KeyType: HASH
+        - AttributeName: snapshot_key
+          KeyType: RANGE

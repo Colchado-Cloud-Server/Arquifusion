@@ -1,0 +1,295 @@
+Resources:
+  FirebaseAuthorizerErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-firebase-authorizer-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-firebase-authorizer
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  CatalogAdminErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-catalog-admin-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-catalog-admin
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  SimulateTelemetryErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-simulate-telemetry-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-simulate-telemetry
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  IngestApiErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-ingest-api-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-ingest-api
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  ProcessTelemetryErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-process-telemetry-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-process-telemetry
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  FleetApiErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-fleet-api-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-fleet-api
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  IncidentApiErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-incident-api-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-incident-api
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  IncidentServiceErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-incident-service-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-incident-service
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  TechnicianDispatchErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-technician-dispatch-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-technician-dispatch
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  PartsServiceErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-parts-service-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-parts-service
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  NotificationServiceErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-notification-service-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-notification-service
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  MaintenanceAnalyzerErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-maintenance-analyzer-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-maintenance-analyzer
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  AnalyticsSyncErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-analytics-sync-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-analytics-sync
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  DashboardApiErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      AlarmName: af-${sls:stage}-dashboard-api-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: af-${sls:stage}-dashboard-api
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  IncidentWorkflowFailedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      Namespace: AWS/States
+      MetricName: ExecutionsFailed
+      Dimensions:
+        - Name: StateMachineArn
+          Value:
+            Ref: IncidentWorkflow
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  MaintenanceWorkflowFailedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      Namespace: AWS/States
+      MetricName: ExecutionsFailed
+      Dimensions:
+        - Name: StateMachineArn
+          Value:
+            Ref: MaintenancePlanningWorkflow
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  TelemetryDlqMessagesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - Name: QueueName
+          Value:
+            Fn::If:
+              - CreateQueues
+              - Fn::GetAtt: [TelemetryDlq, QueueName]
+              - Fn::Select: [5, {Fn::Split: [':', {Ref: ExistingTelemetryDlqArn}]}]
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+  TelemetryQueueAgeAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: AlarmsAvailable
+    Properties:
+      Namespace: AWS/SQS
+      MetricName: ApproximateAgeOfOldestMessage
+      Dimensions:
+        - Name: QueueName
+          Value:
+            Fn::If:
+              - CreateQueues
+              - Fn::GetAtt: [TelemetryQueue, QueueName]
+              - Fn::Select: [5, {Fn::Split: [':', {Ref: ExistingTelemetryQueueArn}]}]
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 300
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching

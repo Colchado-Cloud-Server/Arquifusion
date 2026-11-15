@@ -1,0 +1,17 @@
+Resources:
+  IncidentWorkflow:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: af-${sls:stage}-incident-workflow
+      StateMachineType: STANDARD
+      RoleArn:
+        Ref: StepFunctionsRoleArn
+      Definition: ${file(./workflows/incident.asl.yml)}
+  MaintenancePlanningWorkflow:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: af-${sls:stage}-maintenance-planning
+      StateMachineType: STANDARD
+      RoleArn:
+        Ref: StepFunctionsRoleArn
+      Definition: ${file(./workflows/maintenance.asl.yml)}

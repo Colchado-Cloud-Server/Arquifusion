@@ -29,6 +29,9 @@ node_modules/
 dist/
 build/
 .serverless/
+.artifacts/
+.local/
+/seed/demo_user_uids.json
 .wrangler/
 coverage/
 playwright-report/

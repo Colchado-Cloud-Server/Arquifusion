@@ -1,0 +1,35 @@
+Resources:
+  SimulateTelemetrySchedule:
+    Type: AWS::Scheduler::Schedule
+    Condition: SchedulerAvailable
+    Properties:
+      Name: af-${sls:stage}-simulate-telemetry
+      State: DISABLED
+      ScheduleExpression: rate(1 minute)
+      FlexibleTimeWindow: {Mode: 'OFF'}
+      Target:
+        Arn:
+          Fn::GetAtt: [SimulateTelemetryLambdaFunction, Arn]
+        RoleArn:
+          Ref: SchedulerRoleArn
+        Input: '{"schema_version":"1.0","operation_id":"${env:DEMO_OPERATION_ID, "op-demo"}","scheduled_at":"<aws.scheduler.scheduled-time>","run_id":"telemetry:<aws.scheduler.scheduled-time>"}'
+        RetryPolicy:
+          MaximumEventAgeInSeconds: 300
+          MaximumRetryAttempts: 2
+  MaintenancePlanningSchedule:
+    Type: AWS::Scheduler::Schedule
+    Condition: SchedulerAvailable
+    Properties:
+      Name: af-${sls:stage}-maintenance-planning
+      State: DISABLED
+      ScheduleExpression: rate(1 hour)
+      FlexibleTimeWindow: {Mode: 'OFF'}
+      Target:
+        Arn:
+          Ref: MaintenancePlanningWorkflow
+        RoleArn:
+          Ref: SchedulerRoleArn
+        Input: '{"schema_version":"1.0","operation_id":"${env:DEMO_OPERATION_ID, "op-demo"}","scheduled_at":"<aws.scheduler.scheduled-time>","run_id":"maintenance:<aws.scheduler.scheduled-time>"}'
+        RetryPolicy:
+          MaximumEventAgeInSeconds: 3600
+          MaximumRetryAttempts: 2

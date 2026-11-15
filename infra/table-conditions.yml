@@ -1,0 +1,106 @@
+Parameters:
+  UseExistingOperationsTable:
+    Type: String
+    Default: ${env:USE_EXISTING_OPERATIONS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingMachineModelsTable:
+    Type: String
+    Default: ${env:USE_EXISTING_MACHINE_MODELS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingMachinesTable:
+    Type: String
+    Default: ${env:USE_EXISTING_MACHINES_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingEventDedupTable:
+    Type: String
+    Default: ${env:USE_EXISTING_EVENT_DEDUP_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingIncidentsTable:
+    Type: String
+    Default: ${env:USE_EXISTING_INCIDENTS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingActiveIncidentsTable:
+    Type: String
+    Default: ${env:USE_EXISTING_ACTIVE_INCIDENTS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingMaintenanceEventsTable:
+    Type: String
+    Default: ${env:USE_EXISTING_MAINTENANCE_EVENTS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingTechniciansTable:
+    Type: String
+    Default: ${env:USE_EXISTING_TECHNICIANS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingPartsTable:
+    Type: String
+    Default: ${env:USE_EXISTING_PARTS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingPartReservationsTable:
+    Type: String
+    Default: ${env:USE_EXISTING_PART_RESERVATIONS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingUsersTable:
+    Type: String
+    Default: ${env:USE_EXISTING_USERS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingNotificationsTable:
+    Type: String
+    Default: ${env:USE_EXISTING_NOTIFICATIONS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+  UseExistingAnalyticsTable:
+    Type: String
+    Default: ${env:USE_EXISTING_ANALYTICS_TABLE, 'false'}
+    AllowedValues: ['true', 'false']
+Conditions:
+  CreateOperationsTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingOperationsTable}, 'false']
+  CreateMachineModelsTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingMachineModelsTable}, 'false']
+  CreateMachinesTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingMachinesTable}, 'false']
+  CreateEventDedupTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingEventDedupTable}, 'false']
+  CreateIncidentsTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingIncidentsTable}, 'false']
+  CreateActiveIncidentsTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingActiveIncidentsTable}, 'false']
+  CreateMaintenanceEventsTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingMaintenanceEventsTable}, 'false']
+  CreateTechniciansTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingTechniciansTable}, 'false']
+  CreatePartsTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingPartsTable}, 'false']
+  CreatePartReservationsTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingPartReservationsTable}, 'false']
+  CreateUsersTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingUsersTable}, 'false']
+  CreateNotificationsTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingNotificationsTable}, 'false']
+  CreateAnalyticsTable:
+    Fn::And:
+      - Condition: CreateTables
+      - Fn::Equals: [{Ref: UseExistingAnalyticsTable}, 'false']

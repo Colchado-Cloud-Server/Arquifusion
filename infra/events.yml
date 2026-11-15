@@ -1,0 +1,24 @@
+Resources:
+  DomainEventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: af-${sls:stage}-arquifusion
+  RiskDetectedRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: af-${sls:stage}-risk-detected
+      EventBusName:
+        Ref: DomainEventBus
+      State: ENABLED
+      EventPattern:
+        source: [arquifusion.telemetry]
+        detail-type: [risk.detected]
+      Targets:
+        - Id: IncidentWorkflow
+          Arn:
+            Ref: IncidentWorkflow
+          RoleArn:
+            Ref: EventsStartSfnRoleArn
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 3600
+            MaximumRetryAttempts: 5

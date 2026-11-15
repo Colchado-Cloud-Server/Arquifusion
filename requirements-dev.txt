@@ -1,0 +1,5 @@
+-r requirements.txt
+pytest==8.4.1
+PyYAML==6.0.2
+python-dotenv==1.1.1
+cfn-lint==1.40.0

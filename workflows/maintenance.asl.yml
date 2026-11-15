@@ -1,0 +1,543 @@
+{
+  "Comment": "Persist local plan before BigQuery. Polls use Wait states and are bounded; no long-lived Lambda polling.",
+  "StartAt": "InitializeRun",
+  "TimeoutSeconds": 1800,
+  "States": {
+    "InitializeRun": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "MaintenanceAnalyzerLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "initialize_run",
+        "execution_arn.$": "$$.Execution.Id",
+        "context.$": "$"
+      },
+      "ResultPath": "$",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "AnalyzeLocal",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "PlanningFailed"
+        }
+      ]
+    },
+    "AnalyzeLocal": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "MaintenanceAnalyzerLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "analyze_local",
+        "context.$": "$"
+      },
+      "ResultPath": "$.plan",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "ProjectPartsDemand",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "PlanningFailed"
+        }
+      ]
+    },
+    "ProjectPartsDemand": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "PartsServiceLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "project_demand",
+        "context.$": "$"
+      },
+      "ResultPath": "$.demand",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CreatePlanNotifications",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "DemandUnavailable"
+        }
+      ]
+    },
+    "DemandUnavailable": {
+      "Type": "Pass",
+      "Result": {
+        "status": "UNAVAILABLE"
+      },
+      "ResultPath": "$.demand",
+      "Next": "CreatePlanNotifications"
+    },
+    "CreatePlanNotifications": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "NotificationServiceLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "create_plan_notifications",
+        "context.$": "$"
+      },
+      "ResultPath": "$.notifications",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "ExportAnalytics",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "PlanNotificationsPending"
+        }
+      ]
+    },
+    "PlanNotificationsPending": {
+      "Type": "Pass",
+      "Result": {
+        "status": "PENDING_RETRY"
+      },
+      "ResultPath": "$.notifications",
+      "Next": "ExportAnalytics"
+    },
+    "ExportAnalytics": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "AnalyticsSyncLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "export_aggregates",
+        "context.$": "$"
+      },
+      "ResultPath": "$.export",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "StartLoad",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "MarkAnalyticsDegraded"
+        }
+      ]
+    },
+    "StartLoad": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "AnalyticsSyncLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "start_load",
+        "context.$": "$"
+      },
+      "ResultPath": "$.load_job",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "ResetLoadPoll",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "MarkAnalyticsDegraded"
+        }
+      ]
+    },
+    "ResetLoadPoll": {
+      "Type": "Pass",
+      "Result": {
+        "attempt": 0
+      },
+      "ResultPath": "$.poll",
+      "Next": "WaitLoad"
+    },
+    "WaitLoad": {
+      "Type": "Wait",
+      "Seconds": 5,
+      "Next": "CountLoadPoll"
+    },
+    "CountLoadPoll": {
+      "Type": "Pass",
+      "Parameters": {
+        "attempt.$": "States.MathAdd($.poll.attempt, 1)"
+      },
+      "ResultPath": "$.poll",
+      "Next": "PollLoad"
+    },
+    "PollLoad": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "AnalyticsSyncLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "get_load_status",
+        "context.$": "$"
+      },
+      "ResultPath": "$.load_job",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "LoadStatus",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "MarkAnalyticsDegraded"
+        }
+      ]
+    },
+    "LoadStatus": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.load_job.status",
+          "StringEquals": "SUCCEEDED",
+          "Next": "StartQuery"
+        },
+        {
+          "Variable": "$.load_job.status",
+          "StringEquals": "FAILED",
+          "Next": "MarkAnalyticsDegraded"
+        },
+        {
+          "Variable": "$.poll.attempt",
+          "NumericGreaterThanEquals": 20,
+          "Next": "MarkAnalyticsDegraded"
+        }
+      ],
+      "Default": "WaitLoad"
+    },
+    "StartQuery": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "AnalyticsSyncLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "start_query",
+        "context.$": "$"
+      },
+      "ResultPath": "$.query_job",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "ResetQueryPoll",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "MarkAnalyticsDegraded"
+        }
+      ]
+    },
+    "ResetQueryPoll": {
+      "Type": "Pass",
+      "Result": {
+        "attempt": 0
+      },
+      "ResultPath": "$.poll",
+      "Next": "WaitQuery"
+    },
+    "WaitQuery": {
+      "Type": "Wait",
+      "Seconds": 5,
+      "Next": "CountQueryPoll"
+    },
+    "CountQueryPoll": {
+      "Type": "Pass",
+      "Parameters": {
+        "attempt.$": "States.MathAdd($.poll.attempt, 1)"
+      },
+      "ResultPath": "$.poll",
+      "Next": "PollQuery"
+    },
+    "PollQuery": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "AnalyticsSyncLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "get_query_status",
+        "context.$": "$"
+      },
+      "ResultPath": "$.query_job",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "QueryStatus",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "MarkAnalyticsDegraded"
+        }
+      ]
+    },
+    "QueryStatus": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.query_job.status",
+          "StringEquals": "SUCCEEDED",
+          "Next": "PublishSnapshot"
+        },
+        {
+          "Variable": "$.query_job.status",
+          "StringEquals": "FAILED",
+          "Next": "MarkAnalyticsDegraded"
+        },
+        {
+          "Variable": "$.poll.attempt",
+          "NumericGreaterThanEquals": 20,
+          "Next": "MarkAnalyticsDegraded"
+        }
+      ],
+      "Default": "WaitQuery"
+    },
+    "PublishSnapshot": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "AnalyticsSyncLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "publish_snapshot",
+        "context.$": "$"
+      },
+      "ResultPath": "$.snapshot",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "Completed",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "MarkAnalyticsDegraded"
+        }
+      ]
+    },
+    "MarkAnalyticsDegraded": {
+      "Type": "Task",
+      "Resource": {
+        "Fn::GetAtt": [
+          "AnalyticsSyncLambdaFunction",
+          "Arn"
+        ]
+      },
+      "Parameters": {
+        "schema_version": "1.0",
+        "action": "record_degradation",
+        "context.$": "$"
+      },
+      "ResultPath": "$.snapshot",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "Completed",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "DegradationPersistenceFailed"
+        }
+      ]
+    },
+    "DegradationPersistenceFailed": {
+      "Type": "Pass",
+      "Result": {
+        "status": "UNAVAILABLE",
+        "freshness_persisted": false
+      },
+      "ResultPath": "$.snapshot",
+      "Next": "Completed"
+    },
+    "PlanningFailed": {
+      "Type": "Fail",
+      "Error": "LocalPlanningFailed",
+      "Cause": "Local plan was not confirmed persisted"
+    },
+    "Completed": {
+      "Type": "Succeed"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+# Inventario de ejemplo; completar con evidencia real, sin claves ni tokens.
+stage: dev
+account_id: ''
+region: us-east-1
+deployment_actor_role: ''
+artifacts_bucket:
+  name: ''
+  owner: ''
+  origin: preprovisioned
+  write_read_delete_verified: false
+roles:
+  lambda: {arn: '', trust_verified: false, effective_actions_verified: false}
+  step_functions: {arn: '', trust_verified: false, effective_actions_verified: false}
+  eventbridge: {arn: '', trust_verified: false, effective_actions_verified: false}
+  scheduler: {arn: '', trust_verified: false, effective_actions_verified: false}
+existing_resources: []
+# Para cada recurso preexistente registrar tipo, nombre, ARN/URL, región,
+# responsable, motivo y alcance concedido. No registrar valores de secretos.
+blockers: []
+evidence:
+  timestamp_utc: ''
+  cloudformation_read_verified: false
+  cloudformation_deployment_verified: false
+  lambda_sqs_partial_failure_verified: false
+  step_functions_execution_verified: false
+  cors_from_pages_verified: false
+  dlq_and_redrive_verified: false
+  schedules_paused: true

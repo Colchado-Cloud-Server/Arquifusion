@@ -1,0 +1,25 @@
+Outputs:
+  HttpApiUrl:
+    Value:
+      Fn::Join: ['', ['https://', {Ref: HttpApi}, '.execute-api.', {Ref: 'AWS::Region'}, '.', {Ref: 'AWS::URLSuffix'}]]
+  TelemetryQueueUrl:
+    Value:
+      Fn::If: [CreateQueues, {Ref: TelemetryQueue}, {Ref: ExistingTelemetryQueueUrl}]
+  TelemetryQueueArn:
+    Value:
+      Fn::If: [CreateQueues, {Fn::GetAtt: [TelemetryQueue, Arn]}, {Ref: ExistingTelemetryQueueArn}]
+  TelemetryDlqUrl:
+    Value:
+      Fn::If: [CreateQueues, {Ref: TelemetryDlq}, {Ref: ExistingTelemetryDlqUrl}]
+  TelemetryDlqArn:
+    Value:
+      Fn::If: [CreateQueues, {Fn::GetAtt: [TelemetryDlq, Arn]}, {Ref: ExistingTelemetryDlqArn}]
+  TelemetryBucketName:
+    Value:
+      Fn::If: [CreateTelemetryBucket, {Ref: TelemetryBucket}, {Ref: ExistingTelemetryBucket}]
+  IncidentWorkflowArn:
+    Value:
+      Ref: IncidentWorkflow
+  MaintenancePlanningWorkflowArn:
+    Value:
+      Ref: MaintenancePlanningWorkflow

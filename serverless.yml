@@ -1,0 +1,90 @@
+service: arquifusion
+frameworkVersion: '3.40.0'
+configValidationMode: error
+useDotenv: true
+
+plugins:
+  - ./scripts/serverless-guard.cjs
+
+provider:
+  name: aws
+  runtime: python3.12
+  architecture: x86_64
+  stage: ${opt:stage, env:STAGE, 'dev'}
+  region: ${opt:region, env:AWS_REGION, 'us-east-1'}
+  stackName: af-${sls:stage}
+  memorySize: 256
+  timeout: 28
+  versionFunctions: false
+  logRetentionInDays: 7
+  deploymentBucket:
+    name: ${env:DEPLOYMENT_BUCKET}
+    serverSideEncryption: AES256
+    blockPublicAccess: true
+  iam:
+    role: ${env:LAMBDA_ROLE_ARN}
+  environment:
+    STAGE: ${sls:stage}
+    LOG_LEVEL: INFO
+  tags:
+    Project: ArquiFusion
+    Stage: ${sls:stage}
+  stackTags:
+    Project: ArquiFusion
+    Stage: ${sls:stage}
+  httpApi:
+    name: af-${sls:stage}-api
+    payload: '2.0'
+    cors:
+      allowedOrigins:
+        - ${env:PAGES_ORIGIN}
+      allowedHeaders:
+        - Authorization
+        - Content-Type
+        - Idempotency-Key
+      allowedMethods: [GET, POST, PATCH, OPTIONS]
+      maxAge: 300
+    authorizers:
+      firebaseAuthorizer:
+        type: request
+        functionName: firebaseAuthorizer
+        payloadVersion: '2.0'
+        enableSimpleResponses: true
+        resultTtlInSeconds: 0
+        identitySource: $request.header.Authorization
+  logs:
+    httpApi:
+      format: '{"request_id":"$context.requestId","route":"$context.routeKey","status":"$context.status"}'
+
+package:
+  artifact: .artifacts/backend.zip
+
+custom:
+  tableNames:
+    operations: ${env:OPERATIONS_TABLE, 'af-${sls:stage}-t-operations'}
+    machineModels: ${env:MACHINE_MODELS_TABLE, 'af-${sls:stage}-t-machine-models'}
+    machines: ${env:MACHINES_TABLE, 'af-${sls:stage}-t-machines'}
+    eventDedup: ${env:EVENT_DEDUP_TABLE, 'af-${sls:stage}-t-event-dedup'}
+    incidents: ${env:INCIDENTS_TABLE, 'af-${sls:stage}-t-incidents'}
+    activeIncidents: ${env:ACTIVE_INCIDENTS_TABLE, 'af-${sls:stage}-t-active-incidents'}
+    maintenanceEvents: ${env:MAINTENANCE_EVENTS_TABLE, 'af-${sls:stage}-t-maintenance-events'}
+    technicians: ${env:TECHNICIANS_TABLE, 'af-${sls:stage}-t-technicians'}
+    parts: ${env:PARTS_TABLE, 'af-${sls:stage}-t-parts'}
+    partReservations: ${env:PART_RESERVATIONS_TABLE, 'af-${sls:stage}-t-part-reservations'}
+    users: ${env:USERS_TABLE, 'af-${sls:stage}-t-users'}
+    notifications: ${env:NOTIFICATIONS_TABLE, 'af-${sls:stage}-t-notifications'}
+    analytics: ${env:ANALYTICS_TABLE, 'af-${sls:stage}-t-analytics'}
+
+functions: ${file(./infra/functions.yml)}
+
+resources:
+  - ${file(./infra/parameters.yml)}
+  - ${file(./infra/table-conditions.yml)}
+  - ${file(./infra/tables.yml)}
+  - ${file(./infra/queues.yml)}
+  - ${file(./infra/storage.yml)}
+  - ${file(./infra/events.yml)}
+  - ${file(./infra/workflows.yml)}
+  - ${file(./infra/schedules.yml)}
+  - ${file(./infra/observability.yml)}
+  - ${file(./infra/outputs.yml)}

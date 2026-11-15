@@ -1,0 +1,19 @@
+{
+  "name": "arquifusion-infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AWS Academy Learner Lab infrastructure for ArquiFusion",
+  "engines": {"node": ">=20 <25"},
+  "scripts": {
+    "test": "python -m pytest",
+    "validate": "python -m scripts.validate_infra",
+    "validate:template": "python -m scripts.compile_template",
+    "lint:template": "cfn-lint -t .artifacts/template-only/cloudformation-template-update-stack.json",
+    "package": "python -m scripts.package_backend && serverless package",
+    "deploy": "python -m scripts.deploy",
+    "smoke:aws": "python -m scripts.smoke_aws",
+    "redrive": "python -m scripts.redrive_telemetry",
+    "schedules": "python -m scripts.manage_schedules"
+  },
+  "devDependencies": {"serverless": "3.40.0"}
+}
