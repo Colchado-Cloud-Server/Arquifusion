@@ -1,4 +1,5 @@
 # Configuración local y secretos
+/ArquiFusion_requerimientos_y_backlog.md
 .env
 .env.*
 !.env.example

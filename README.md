@@ -6,7 +6,7 @@ Plataforma de monitoreo de maquinaria y gestión de mantenimiento para una hacka
 
 Repositorio inicial: estructura de directorios, configuración de Git y guía de colaboración. Los servicios, contratos, dependencias y recursos cloud están pendientes de implementación. No hay despliegues ni pruebas automatizadas ejecutables todavía.
 
-La fuente de requisitos es [ArquiFusion_requerimientos_y_backlog.md](ArquiFusion_requerimientos_y_backlog.md). El plano está en [ArquiFusion_arquitectura_v3 (1).drawio](<ArquiFusion_arquitectura_v3 (1).drawio>). El backlog original conserva sus tareas pendientes; este esqueleto no completa BASE-01.
+La fuente de requisitos es el archivo local `ArquiFusion_requerimientos_y_backlog.md`, excluido de Git. Cada integrante debe obtenerlo por separado. El plano está en [ArquiFusion_arquitectura_v3 (1).drawio](<ArquiFusion_arquitectura_v3 (1).drawio>). El backlog original conserva sus tareas pendientes; este esqueleto no completa BASE-01.
 
 ## Arquitectura acordada
 
@@ -22,7 +22,7 @@ Los servicios comparten repositorio y despliegue inicial. Sus responsabilidades,
 
 ```text
 .
-├── ArquiFusion_requerimientos_y_backlog.md
+├── ArquiFusion_requerimientos_y_backlog.md  # Local, excluido de Git
 ├── ArquiFusion_arquitectura_v3 (1).drawio
 ├── CONTRIBUTING.md
 ├── .env.example
