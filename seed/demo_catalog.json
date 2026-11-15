@@ -1,0 +1,1107 @@
+{
+  "schema_version": "1.0",
+  "_notes": [
+    "Seed idempotente: crea lo ausente y actualiza campos de catálogo.",
+    "Al repetir la carga NO se pisan campos operativos: status, hours_*, last_position, reserved/available, availability, current_incident_id.",
+    "Sin contraseñas: las credenciales viven solo en Firebase Authentication."
+  ],
+  "operations": [
+    {
+      "operation_id": "op-demo",
+      "name": "Operación Minera Demo",
+      "timezone": "America/Lima",
+      "zones": [
+        {
+          "zone_id": "zone-norte",
+          "name": "Zona Norte",
+          "center": {
+            "lat": -15.53,
+            "lon": -71.6
+          }
+        },
+        {
+          "zone_id": "zone-sur",
+          "name": "Zona Sur",
+          "center": {
+            "lat": -15.58,
+            "lon": -71.6
+          }
+        },
+        {
+          "zone_id": "zone-planta",
+          "name": "Planta y taller",
+          "center": {
+            "lat": -15.55,
+            "lon": -71.56
+          }
+        }
+      ],
+      "warehouses": [
+        {
+          "warehouse_id": "wh-central",
+          "name": "Almacén central",
+          "zone_id": "zone-planta"
+        },
+        {
+          "warehouse_id": "wh-norte",
+          "name": "Almacén avanzado Norte",
+          "zone_id": "zone-norte"
+        }
+      ],
+      "planning_policy": {
+        "horizon_days": 14,
+        "warning_hours_before_service": 50,
+        "cooldown_minutes": 30
+      }
+    }
+  ],
+  "machine_models": [
+    {
+      "model_id": "EXC-320",
+      "name": "Excavadora 320",
+      "category": "EXCAVADORA",
+      "thresholds": {
+        "temperature_c": {
+          "warn": 95,
+          "critical": 105
+        },
+        "vibration_mm_s": {
+          "warn": 6,
+          "critical": 9
+        },
+        "pressure_bar": {
+          "min": 180,
+          "max": 320
+        },
+        "fuel_lph": {
+          "expected": 38,
+          "warn_ratio": 1.25
+        },
+        "engine_rpm": {
+          "max": 2100
+        }
+      },
+      "risk_rules": {
+        "window_minutes": 15,
+        "persistence_readings": 3,
+        "min_signals": 2
+      },
+      "maintenance": {
+        "interval_hours": 500
+      },
+      "anomaly_families": [
+        {
+          "family": "OVERHEAT",
+          "required_skills": [
+            "engine"
+          ],
+          "estimated_repair_hours": 4,
+          "parts": [
+            {
+              "part_id": "coolant-pump",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "family": "HYDRAULIC",
+          "required_skills": [
+            "hydraulics"
+          ],
+          "estimated_repair_hours": 6,
+          "parts": [
+            {
+              "part_id": "hydraulic-pump",
+              "qty": 1
+            },
+            {
+              "part_id": "hydraulic-hose",
+              "qty": 2
+            }
+          ]
+        },
+        {
+          "family": "BEARING_WEAR",
+          "required_skills": [
+            "drivetrain"
+          ],
+          "estimated_repair_hours": 5,
+          "parts": [
+            {
+              "part_id": "bearing-set",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "family": "FUEL_SYSTEM",
+          "required_skills": [
+            "engine"
+          ],
+          "estimated_repair_hours": 3,
+          "parts": [
+            {
+              "part_id": "fuel-injector",
+              "qty": 2
+            },
+            {
+              "part_id": "fuel-filter",
+              "qty": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "VOL-40",
+      "name": "Volquete 40 t",
+      "category": "VOLQUETE",
+      "thresholds": {
+        "temperature_c": {
+          "warn": 98,
+          "critical": 108
+        },
+        "vibration_mm_s": {
+          "warn": 5,
+          "critical": 8
+        },
+        "pressure_bar": {
+          "min": 150,
+          "max": 280
+        },
+        "fuel_lph": {
+          "expected": 55,
+          "warn_ratio": 1.25
+        },
+        "engine_rpm": {
+          "max": 2000
+        }
+      },
+      "risk_rules": {
+        "window_minutes": 15,
+        "persistence_readings": 3,
+        "min_signals": 2
+      },
+      "maintenance": {
+        "interval_hours": 400
+      },
+      "anomaly_families": [
+        {
+          "family": "OVERHEAT",
+          "required_skills": [
+            "engine"
+          ],
+          "estimated_repair_hours": 4,
+          "parts": [
+            {
+              "part_id": "coolant-pump",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "family": "BRAKES",
+          "required_skills": [
+            "drivetrain"
+          ],
+          "estimated_repair_hours": 3,
+          "parts": [
+            {
+              "part_id": "brake-pad-set",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "family": "BEARING_WEAR",
+          "required_skills": [
+            "drivetrain"
+          ],
+          "estimated_repair_hours": 5,
+          "parts": [
+            {
+              "part_id": "bearing-set",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "family": "FUEL_SYSTEM",
+          "required_skills": [
+            "engine"
+          ],
+          "estimated_repair_hours": 3,
+          "parts": [
+            {
+              "part_id": "fuel-injector",
+              "qty": 2
+            },
+            {
+              "part_id": "fuel-filter",
+              "qty": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "CAR-950",
+      "name": "Cargador frontal 950",
+      "category": "CARGADOR",
+      "thresholds": {
+        "temperature_c": {
+          "warn": 96,
+          "critical": 106
+        },
+        "vibration_mm_s": {
+          "warn": 6,
+          "critical": 9
+        },
+        "pressure_bar": {
+          "min": 170,
+          "max": 300
+        },
+        "fuel_lph": {
+          "expected": 30,
+          "warn_ratio": 1.25
+        },
+        "engine_rpm": {
+          "max": 2200
+        }
+      },
+      "risk_rules": {
+        "window_minutes": 15,
+        "persistence_readings": 3,
+        "min_signals": 2
+      },
+      "maintenance": {
+        "interval_hours": 450
+      },
+      "anomaly_families": [
+        {
+          "family": "OVERHEAT",
+          "required_skills": [
+            "engine"
+          ],
+          "estimated_repair_hours": 4,
+          "parts": [
+            {
+              "part_id": "coolant-pump",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "family": "HYDRAULIC",
+          "required_skills": [
+            "hydraulics"
+          ],
+          "estimated_repair_hours": 6,
+          "parts": [
+            {
+              "part_id": "hydraulic-pump",
+              "qty": 1
+            },
+            {
+              "part_id": "hydraulic-hose",
+              "qty": 2
+            }
+          ]
+        },
+        {
+          "family": "TURBO",
+          "required_skills": [
+            "engine"
+          ],
+          "estimated_repair_hours": 7,
+          "parts": [
+            {
+              "part_id": "turbocharger",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "family": "FUEL_SYSTEM",
+          "required_skills": [
+            "engine"
+          ],
+          "estimated_repair_hours": 3,
+          "parts": [
+            {
+              "part_id": "fuel-injector",
+              "qty": 2
+            },
+            {
+              "part_id": "fuel-filter",
+              "qty": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "PER-D50",
+      "name": "Perforadora D50",
+      "category": "PERFORADORA",
+      "thresholds": {
+        "temperature_c": {
+          "warn": 92,
+          "critical": 102
+        },
+        "vibration_mm_s": {
+          "warn": 7,
+          "critical": 11
+        },
+        "pressure_bar": {
+          "min": 200,
+          "max": 350
+        },
+        "fuel_lph": {
+          "expected": 42,
+          "warn_ratio": 1.25
+        },
+        "engine_rpm": {
+          "max": 1900
+        }
+      },
+      "risk_rules": {
+        "window_minutes": 15,
+        "persistence_readings": 3,
+        "min_signals": 2
+      },
+      "maintenance": {
+        "interval_hours": 350
+      },
+      "anomaly_families": [
+        {
+          "family": "HYDRAULIC",
+          "required_skills": [
+            "hydraulics"
+          ],
+          "estimated_repair_hours": 6,
+          "parts": [
+            {
+              "part_id": "hydraulic-pump",
+              "qty": 1
+            },
+            {
+              "part_id": "hydraulic-hose",
+              "qty": 2
+            }
+          ]
+        },
+        {
+          "family": "ELECTRICAL",
+          "required_skills": [
+            "electrical"
+          ],
+          "estimated_repair_hours": 3,
+          "parts": [
+            {
+              "part_id": "alternator",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "family": "DRILL_WEAR",
+          "required_skills": [
+            "drilling"
+          ],
+          "estimated_repair_hours": 2,
+          "parts": [
+            {
+              "part_id": "drill-bit",
+              "qty": 2
+            }
+          ]
+        },
+        {
+          "family": "OVERHEAT",
+          "required_skills": [
+            "engine"
+          ],
+          "estimated_repair_hours": 4,
+          "parts": [
+            {
+              "part_id": "coolant-pump",
+              "qty": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "machines": [
+    {
+      "machine_id": "machine-001",
+      "operation_id": "op-demo",
+      "model_id": "EXC-320",
+      "name": "Excavadora 320 #01",
+      "zone_id": "zone-norte",
+      "status": "OPERATING",
+      "hours_total": 8200,
+      "hours_since_service": 120,
+      "typical_daily_hours": 14,
+      "baseline_fuel_lph": 36.9,
+      "last_position": {
+        "lat": -15.523,
+        "lon": -71.607
+      }
+    },
+    {
+      "machine_id": "machine-002",
+      "operation_id": "op-demo",
+      "model_id": "EXC-320",
+      "name": "Excavadora 320 #02",
+      "zone_id": "zone-norte",
+      "status": "OPERATING",
+      "hours_total": 7400,
+      "hours_since_service": 455,
+      "typical_daily_hours": 15,
+      "baseline_fuel_lph": 37.6,
+      "last_position": {
+        "lat": -15.526,
+        "lon": -71.604
+      }
+    },
+    {
+      "machine_id": "machine-003",
+      "operation_id": "op-demo",
+      "model_id": "EXC-320",
+      "name": "Excavadora 320 #03",
+      "zone_id": "zone-sur",
+      "status": "OPERATING",
+      "hours_total": 9100,
+      "hours_since_service": 60,
+      "typical_daily_hours": 13,
+      "baseline_fuel_lph": 38.4,
+      "last_position": {
+        "lat": -15.579,
+        "lon": -71.601
+      }
+    },
+    {
+      "machine_id": "machine-004",
+      "operation_id": "op-demo",
+      "model_id": "EXC-320",
+      "name": "Excavadora 320 #04",
+      "zone_id": "zone-sur",
+      "status": "OPERATING",
+      "hours_total": 6100,
+      "hours_since_service": 300,
+      "typical_daily_hours": 14,
+      "baseline_fuel_lph": 39.1,
+      "last_position": {
+        "lat": -15.582,
+        "lon": -71.598
+      }
+    },
+    {
+      "machine_id": "machine-005",
+      "operation_id": "op-demo",
+      "model_id": "VOL-40",
+      "name": "Volquete 40 t #05",
+      "zone_id": "zone-norte",
+      "status": "OPERATING",
+      "hours_total": 12100,
+      "hours_since_service": 90,
+      "typical_daily_hours": 18,
+      "baseline_fuel_lph": 57.8,
+      "last_position": {
+        "lat": -15.535,
+        "lon": -71.595
+      }
+    },
+    {
+      "machine_id": "machine-006",
+      "operation_id": "op-demo",
+      "model_id": "VOL-40",
+      "name": "Volquete 40 t #06",
+      "zone_id": "zone-norte",
+      "status": "OPERATING",
+      "hours_total": 11800,
+      "hours_since_service": 370,
+      "typical_daily_hours": 19,
+      "baseline_fuel_lph": 52.8,
+      "last_position": {
+        "lat": -15.538,
+        "lon": -71.592
+      }
+    },
+    {
+      "machine_id": "machine-007",
+      "operation_id": "op-demo",
+      "model_id": "VOL-40",
+      "name": "Volquete 40 t #07",
+      "zone_id": "zone-norte",
+      "status": "OPERATING",
+      "hours_total": 9900,
+      "hours_since_service": 200,
+      "typical_daily_hours": 17,
+      "baseline_fuel_lph": 53.9,
+      "last_position": {
+        "lat": -15.521,
+        "lon": -71.609
+      }
+    },
+    {
+      "machine_id": "machine-008",
+      "operation_id": "op-demo",
+      "model_id": "VOL-40",
+      "name": "Volquete 40 t #08",
+      "zone_id": "zone-sur",
+      "status": "OPERATING",
+      "hours_total": 10400,
+      "hours_since_service": 150,
+      "typical_daily_hours": 21,
+      "baseline_fuel_lph": 55.0,
+      "last_position": {
+        "lat": -15.574,
+        "lon": -71.606
+      }
+    },
+    {
+      "machine_id": "machine-009",
+      "operation_id": "op-demo",
+      "model_id": "VOL-40",
+      "name": "Volquete 40 t #09",
+      "zone_id": "zone-sur",
+      "status": "IDLE",
+      "hours_total": 8800,
+      "hours_since_service": 40,
+      "typical_daily_hours": 3,
+      "baseline_fuel_lph": 56.1,
+      "last_position": {
+        "lat": -15.577,
+        "lon": -71.603
+      }
+    },
+    {
+      "machine_id": "machine-010",
+      "operation_id": "op-demo",
+      "model_id": "VOL-40",
+      "name": "Volquete 40 t #10",
+      "zone_id": "zone-sur",
+      "status": "IDLE",
+      "hours_total": 9600,
+      "hours_since_service": 260,
+      "typical_daily_hours": 4,
+      "baseline_fuel_lph": 57.2,
+      "last_position": {
+        "lat": -15.58,
+        "lon": -71.6
+      }
+    },
+    {
+      "machine_id": "machine-011",
+      "operation_id": "op-demo",
+      "model_id": "CAR-950",
+      "name": "Cargador frontal 950 #11",
+      "zone_id": "zone-norte",
+      "status": "OPERATING",
+      "hours_total": 7000,
+      "hours_since_service": 180,
+      "typical_daily_hours": 12,
+      "baseline_fuel_lph": 28.5,
+      "last_position": {
+        "lat": -15.533,
+        "lon": -71.597
+      }
+    },
+    {
+      "machine_id": "machine-012",
+      "operation_id": "op-demo",
+      "model_id": "CAR-950",
+      "name": "Cargador frontal 950 #12",
+      "zone_id": "zone-sur",
+      "status": "OPERATING",
+      "hours_total": 6500,
+      "hours_since_service": 420,
+      "typical_daily_hours": 13,
+      "baseline_fuel_lph": 29.1,
+      "last_position": {
+        "lat": -15.586,
+        "lon": -71.594
+      }
+    },
+    {
+      "machine_id": "machine-013",
+      "operation_id": "op-demo",
+      "model_id": "CAR-950",
+      "name": "Cargador frontal 950 #13",
+      "zone_id": "zone-planta",
+      "status": "IDLE",
+      "hours_total": 5200,
+      "hours_since_service": 100,
+      "typical_daily_hours": 3,
+      "baseline_fuel_lph": 29.7,
+      "last_position": {
+        "lat": -15.559,
+        "lon": -71.551
+      }
+    },
+    {
+      "machine_id": "machine-014",
+      "operation_id": "op-demo",
+      "model_id": "PER-D50",
+      "name": "Perforadora D50 #14",
+      "zone_id": "zone-norte",
+      "status": "OPERATING",
+      "hours_total": 4300,
+      "hours_since_service": 210,
+      "typical_daily_hours": 11,
+      "baseline_fuel_lph": 42.4,
+      "last_position": {
+        "lat": -15.522,
+        "lon": -71.608
+      }
+    },
+    {
+      "machine_id": "machine-015",
+      "operation_id": "op-demo",
+      "model_id": "PER-D50",
+      "name": "Perforadora D50 #15",
+      "zone_id": "zone-sur",
+      "status": "OPERATING",
+      "hours_total": 4800,
+      "hours_since_service": 330,
+      "typical_daily_hours": 12,
+      "baseline_fuel_lph": 43.3,
+      "last_position": {
+        "lat": -15.575,
+        "lon": -71.605
+      }
+    },
+    {
+      "machine_id": "machine-016",
+      "operation_id": "op-demo",
+      "model_id": "PER-D50",
+      "name": "Perforadora D50 #16",
+      "zone_id": "zone-planta",
+      "status": "OPERATING",
+      "hours_total": 3900,
+      "hours_since_service": 50,
+      "typical_daily_hours": 10,
+      "baseline_fuel_lph": 44.1,
+      "last_position": {
+        "lat": -15.548,
+        "lon": -71.562
+      }
+    }
+  ],
+  "technicians": [
+    {
+      "technician_id": "tech-001",
+      "operation_id": "op-demo",
+      "name": "Luis Ramos",
+      "zone_id": "zone-norte",
+      "skills": [
+        "engine",
+        "hydraulics"
+      ],
+      "shift": {
+        "start": "06:00",
+        "end": "18:00",
+        "name": "DAY"
+      },
+      "availability": "AVAILABLE",
+      "current_incident_id": null
+    },
+    {
+      "technician_id": "tech-002",
+      "operation_id": "op-demo",
+      "name": "Marta Huamán",
+      "zone_id": "zone-norte",
+      "skills": [
+        "electrical",
+        "drilling"
+      ],
+      "shift": {
+        "start": "18:00",
+        "end": "06:00",
+        "name": "NIGHT"
+      },
+      "availability": "AVAILABLE",
+      "current_incident_id": null
+    },
+    {
+      "technician_id": "tech-003",
+      "operation_id": "op-demo",
+      "name": "Jorge Salas",
+      "zone_id": "zone-sur",
+      "skills": [
+        "engine",
+        "drivetrain"
+      ],
+      "shift": {
+        "start": "06:00",
+        "end": "18:00",
+        "name": "DAY"
+      },
+      "availability": "AVAILABLE",
+      "current_incident_id": null
+    },
+    {
+      "technician_id": "tech-004",
+      "operation_id": "op-demo",
+      "name": "Rosa Campos",
+      "zone_id": "zone-sur",
+      "skills": [
+        "hydraulics",
+        "drivetrain"
+      ],
+      "shift": {
+        "start": "18:00",
+        "end": "06:00",
+        "name": "NIGHT"
+      },
+      "availability": "AVAILABLE",
+      "current_incident_id": null
+    },
+    {
+      "technician_id": "tech-005",
+      "operation_id": "op-demo",
+      "name": "Pedro Villanueva",
+      "zone_id": "zone-planta",
+      "skills": [
+        "engine",
+        "electrical",
+        "hydraulics"
+      ],
+      "shift": {
+        "start": "06:00",
+        "end": "18:00",
+        "name": "DAY"
+      },
+      "availability": "AVAILABLE",
+      "current_incident_id": null
+    },
+    {
+      "technician_id": "tech-006",
+      "operation_id": "op-demo",
+      "name": "Ana Torres",
+      "zone_id": "zone-planta",
+      "skills": [
+        "drivetrain",
+        "drilling"
+      ],
+      "shift": {
+        "start": "18:00",
+        "end": "06:00",
+        "name": "NIGHT"
+      },
+      "availability": "AVAILABLE",
+      "current_incident_id": null
+    }
+  ],
+  "parts": [
+    {
+      "warehouse_id": "wh-central",
+      "part_id": "coolant-pump",
+      "operation_id": "op-demo",
+      "name": "Bomba de refrigerante",
+      "compatible_models": [
+        "EXC-320",
+        "VOL-40",
+        "CAR-950",
+        "PER-D50"
+      ],
+      "on_hand": 4,
+      "reserved": 0,
+      "available": 4,
+      "reorder_point": 2
+    },
+    {
+      "warehouse_id": "wh-norte",
+      "part_id": "coolant-pump",
+      "operation_id": "op-demo",
+      "name": "Bomba de refrigerante",
+      "compatible_models": [
+        "EXC-320",
+        "VOL-40",
+        "CAR-950",
+        "PER-D50"
+      ],
+      "on_hand": 1,
+      "reserved": 0,
+      "available": 1,
+      "reorder_point": 1
+    },
+    {
+      "warehouse_id": "wh-central",
+      "part_id": "hydraulic-pump",
+      "operation_id": "op-demo",
+      "name": "Bomba hidráulica",
+      "compatible_models": [
+        "EXC-320",
+        "CAR-950",
+        "PER-D50"
+      ],
+      "on_hand": 3,
+      "reserved": 0,
+      "available": 3,
+      "reorder_point": 1
+    },
+    {
+      "warehouse_id": "wh-norte",
+      "part_id": "hydraulic-pump",
+      "operation_id": "op-demo",
+      "name": "Bomba hidráulica",
+      "compatible_models": [
+        "EXC-320",
+        "CAR-950",
+        "PER-D50"
+      ],
+      "on_hand": 1,
+      "reserved": 0,
+      "available": 1,
+      "reorder_point": 1
+    },
+    {
+      "warehouse_id": "wh-central",
+      "part_id": "hydraulic-hose",
+      "operation_id": "op-demo",
+      "name": "Manguera hidráulica",
+      "compatible_models": [
+        "EXC-320",
+        "CAR-950",
+        "PER-D50"
+      ],
+      "on_hand": 12,
+      "reserved": 0,
+      "available": 12,
+      "reorder_point": 4
+    },
+    {
+      "warehouse_id": "wh-norte",
+      "part_id": "hydraulic-hose",
+      "operation_id": "op-demo",
+      "name": "Manguera hidráulica",
+      "compatible_models": [
+        "EXC-320",
+        "CAR-950",
+        "PER-D50"
+      ],
+      "on_hand": 6,
+      "reserved": 0,
+      "available": 6,
+      "reorder_point": 3
+    },
+    {
+      "warehouse_id": "wh-central",
+      "part_id": "bearing-set",
+      "operation_id": "op-demo",
+      "name": "Juego de rodamientos",
+      "compatible_models": [
+        "EXC-320",
+        "VOL-40"
+      ],
+      "on_hand": 5,
+      "reserved": 0,
+      "available": 5,
+      "reorder_point": 2
+    },
+    {
+      "warehouse_id": "wh-norte",
+      "part_id": "bearing-set",
+      "operation_id": "op-demo",
+      "name": "Juego de rodamientos",
+      "compatible_models": [
+        "EXC-320",
+        "VOL-40"
+      ],
+      "on_hand": 2,
+      "reserved": 0,
+      "available": 2,
+      "reorder_point": 1
+    },
+    {
+      "warehouse_id": "wh-central",
+      "part_id": "fuel-injector",
+      "operation_id": "op-demo",
+      "name": "Inyector de combustible",
+      "compatible_models": [
+        "EXC-320",
+        "VOL-40",
+        "CAR-950"
+      ],
+      "on_hand": 10,
+      "reserved": 0,
+      "available": 10,
+      "reorder_point": 4
+    },
+    {
+      "warehouse_id": "wh-norte",
+      "part_id": "fuel-injector",
+      "operation_id": "op-demo",
+      "name": "Inyector de combustible",
+      "compatible_models": [
+        "EXC-320",
+        "VOL-40",
+        "CAR-950"
+      ],
+      "on_hand": 4,
+      "reserved": 0,
+      "available": 4,
+      "reorder_point": 2
+    },
+    {
+      "warehouse_id": "wh-central",
+      "part_id": "fuel-filter",
+      "operation_id": "op-demo",
+      "name": "Filtro de combustible",
+      "compatible_models": [
+        "EXC-320",
+        "VOL-40",
+        "CAR-950"
+      ],
+      "on_hand": 20,
+      "reserved": 0,
+      "available": 20,
+      "reorder_point": 8
+    },
+    {
+      "warehouse_id": "wh-norte",
+      "part_id": "fuel-filter",
+      "operation_id": "op-demo",
+      "name": "Filtro de combustible",
+      "compatible_models": [
+        "EXC-320",
+        "VOL-40",
+        "CAR-950"
+      ],
+      "on_hand": 8,
+      "reserved": 0,
+      "available": 8,
+      "reorder_point": 4
+    },
+    {
+      "warehouse_id": "wh-central",
+      "part_id": "brake-pad-set",
+      "operation_id": "op-demo",
+      "name": "Juego de pastillas de freno",
+      "compatible_models": [
+        "VOL-40"
+      ],
+      "on_hand": 6,
+      "reserved": 0,
+      "available": 6,
+      "reorder_point": 2
+    },
+    {
+      "warehouse_id": "wh-norte",
+      "part_id": "brake-pad-set",
+      "operation_id": "op-demo",
+      "name": "Juego de pastillas de freno",
+      "compatible_models": [
+        "VOL-40"
+      ],
+      "on_hand": 2,
+      "reserved": 0,
+      "available": 2,
+      "reorder_point": 1
+    },
+    {
+      "warehouse_id": "wh-central",
+      "part_id": "turbocharger",
+      "operation_id": "op-demo",
+      "name": "Turbocompresor",
+      "compatible_models": [
+        "CAR-950"
+      ],
+      "on_hand": 1,
+      "reserved": 0,
+      "available": 1,
+      "reorder_point": 1
+    },
+    {
+      "warehouse_id": "wh-central",
+      "part_id": "alternator",
+      "operation_id": "op-demo",
+      "name": "Alternador",
+      "compatible_models": [
+        "PER-D50"
+      ],
+      "on_hand": 2,
+      "reserved": 0,
+      "available": 2,
+      "reorder_point": 1
+    },
+    {
+      "warehouse_id": "wh-central",
+      "part_id": "drill-bit",
+      "operation_id": "op-demo",
+      "name": "Broca de perforación",
+      "compatible_models": [
+        "PER-D50"
+      ],
+      "on_hand": 8,
+      "reserved": 0,
+      "available": 8,
+      "reorder_point": 3
+    },
+    {
+      "warehouse_id": "wh-norte",
+      "part_id": "drill-bit",
+      "operation_id": "op-demo",
+      "name": "Broca de perforación",
+      "compatible_models": [
+        "PER-D50"
+      ],
+      "on_hand": 3,
+      "reserved": 0,
+      "available": 3,
+      "reorder_point": 2
+    }
+  ],
+  "users": [
+    {
+      "firebase_uid": "tzECZgGGVsWKyHOtwujWix1Qgfy1",
+      "email": "admin@arquifusion.test",
+      "display_name": "Admin Demo",
+      "enabled": true,
+      "roles": {
+        "op-demo": "ADMIN"
+      }
+    },
+    {
+      "firebase_uid": "lrMWctW3uiPtDvSbBEFOB494JnS2",
+      "email": "supervisor@arquifusion.test",
+      "display_name": "Supervisor Demo",
+      "enabled": true,
+      "roles": {
+        "op-demo": "SUPERVISOR"
+      }
+    },
+    {
+      "firebase_uid": "Y6nU7kP7TgVbAPXFvuthvFgIki02",
+      "email": "gerencia@arquifusion.test",
+      "display_name": "Gerencia Demo",
+      "enabled": true,
+      "roles": {
+        "op-demo": "GERENCIA"
+      }
+    },
+    {
+      "firebase_uid": "Q67cPuj8TfR8w18y08DgMPvQ3nJ3",
+      "email": "tecnico@arquifusion.test",
+      "display_name": "Técnico Demo",
+      "enabled": true,
+      "roles": {
+        "op-demo": "TECNICO"
+      },
+      "technician_id": "tech-001"
+    },
+    {
+      "firebase_uid": "O2vKgmkhQPNX1AB4OkgEcBQl2PW2",
+      "email": "operador@arquifusion.test",
+      "display_name": "Operador Demo",
+      "enabled": true,
+      "roles": {
+        "op-demo": "OPERADOR"
+      }
+    }
+  ]
+}
